@@ -30,11 +30,11 @@ ENDCLASS.
 CLASS lcl_repo_reader IMPLEMENTATION.
 
   METHOD zif_i18nchk_repo_reader~read.
-    data: bsp_apps type table of o2applname.
+    DATA: bsp_apps TYPE TABLE OF o2applname.
 
-          bsp_apps = value #( ( c_test_app1 ) ( c_test_app2 ) ).
+    bsp_apps = VALUE #( ( c_test_app1 ) ( c_test_app2 ) ).
 
-    result = value #( for bsp_app in bsp_apps where ( table_line in bsp_name_range ) ( bsp_app ) ).
+    result = VALUE #( FOR bsp_app IN bsp_apps WHERE ( table_line IN bsp_name_range ) ( bsp_app ) ).
   ENDMETHOD.
 
 ENDCLASS.
@@ -113,12 +113,14 @@ CLASS ltcl_abap_unit DEFINITION FINAL FOR TESTING
       constructor.
   PRIVATE SECTION.
     DATA:
-      test_data TYPE ty_repos,
-      cut       TYPE REF TO zcl_i18nchk_checker.
+      test_data  TYPE ty_repos,
+      test_data2 TYPE ty_repos,
+      cut        TYPE REF TO zcl_i18nchk_checker.
 
     METHODS:
       setup,
       test_srclang_in_targetlangs FOR TESTING,
+      test_missing_file FOR TESTING,
       test_missing_key FOR TESTING.
 ENDCLASS.
 
@@ -130,9 +132,18 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
      ( name = c_test_app1
        map_entries = VALUE #(
          ( internal_rep = 'B' path = 'i18n/i18n.properties' )
+         ( internal_rep = 'B' path = 'i18n/i18n_en.properties' ) )
+       files = VALUE #(
+         ( file    = 'manifest.json' )
+         ( file    = 'i18n/i18n.properties' )
+         ( file    = 'i18n/i18n_en.properties' ) ) ) ).
+
+    test_data2 = VALUE #(
+     ( name = c_test_app1
+       map_entries = VALUE #(
+         ( internal_rep = 'B' path = 'i18n/i18n.properties' )
          ( internal_rep = 'B' path = 'i18n/i18n_en.properties' )
-         ( internal_rep = 'B' path = 'i18n/i18n_de.properties' )
-         ( internal_rep = 'B' path = 'i18n/ListReport/C_Product/i18n.properties' ) )
+         ( internal_rep = 'B' path = 'i18n/i18n_de.properties' ) )
        files = VALUE #(
          ( file    = 'manifest.json' )
          ( file    = 'i18n/i18n.properties'
@@ -145,11 +156,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
              ( |dialog_title = Warning| ) ) )
          ( file    = 'i18n/i18n_de.properties'
            content = VALUE #(
-             ( |button = Drücke| ) ) )
-         ( file    = 'i18n/ListReport/C_Poduct/i18n.properties'
-           content = VALUE #(
-             ( |title = Product title| )
-             ( |description = Product Description| ) ) ) ) ) ).
+             ( |button = Drücke| ) ) ) ) ) ).
   ENDMETHOD.
 
 
@@ -170,7 +177,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD test_missing_key.
+  METHOD test_missing_file.
     TRY.
         cut = NEW zcl_i18nchk_checker(
           bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
@@ -185,7 +192,37 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
     cut->check_translations( ).
 
-    DATA(result) = cut->get_check_result( ).
+    DATA(check_results) = cut->get_check_result( ).
+
+    cl_abap_unit_assert=>assert_not_initial( act = check_results ).
+    cl_abap_unit_assert=>assert_true( act = xsdbool(
+      line_exists( check_results[
+        bsp_name = c_test_app1 ]-i18n_results[ message_type = zif_i18nchk_c_msg_types=>missing_i18n_file ] ) ) ).
+
+  ENDMETHOD.
+
+  METHOD test_missing_key.
+    TRY.
+        cut = NEW zcl_i18nchk_checker(
+          bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
+          source_language  = ''
+          target_languages = VALUE #( ( `de` ) ) ).
+      CATCH zcx_i18nchk_error INTO DATA(error).
+    ENDTRY.
+    cl_abap_unit_assert=>assert_not_bound( act = error ).
+
+    cut->repo_access_factory = NEW lcl_repo_access_factory( test_data2 ).
+    cut->repo_reader = NEW lcl_repo_reader( ).
+
+    cut->check_translations( ).
+
+    DATA(check_results) = cut->get_check_result( ).
+
+    cl_abap_unit_assert=>assert_not_initial( act = check_results ).
+    cl_abap_unit_assert=>assert_true( act = xsdbool(
+      line_exists( check_results[
+        bsp_name = c_test_app1 ]-i18n_results[ message_type = zif_i18nchk_c_msg_types=>missing_i18n_key ] ) ) ).
+
   ENDMETHOD.
 
 ENDCLASS.

@@ -7,6 +7,8 @@ INTERFACE zif_i18nchk_ty_global
     ty_bsp_range        TYPE RANGE OF o2applname,
     ty_bsp_names        TYPE STANDARD TABLE OF o2applname WITH EMPTY KEY,
     ty_comment_patterns TYPE RANGE OF string,
+    "! <p class="shorttext synchronized" lang="en">Type of message in i18n check</p>
+    ty_message_type     TYPE c LENGTH 30,
 
     BEGIN OF ty_i18n_text,
       key   TYPE string,
@@ -37,6 +39,7 @@ INTERFACE zif_i18nchk_ty_global
     BEGIN OF ty_i18n_check_result,
       file          TYPE ty_i18n_file,
       message       TYPE string,
+      message_type  TYPE ty_message_type,
       key           TYPE string,
       value         TYPE string,
       default_value TYPE string,

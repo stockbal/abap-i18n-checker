@@ -268,7 +268,9 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
         REPLACE FIRST OCCURRENCE OF '{1}' IN language_missing_msg
           WITH file_name.
-        APPEND VALUE #( message = language_missing_msg ) TO current_check_result-i18n_results.
+        APPEND VALUE #(
+          message      = language_missing_msg
+          message_type = zif_i18nchk_c_msg_types=>missing_i18n_file ) TO current_check_result-i18n_results.
       ENDIF.
     ENDLOOP.
 
