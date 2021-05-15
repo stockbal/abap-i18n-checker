@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_INTF" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOINTERF>
+    <CLSNAME>ZIF_I18NCHK_REP_ACCESS_FACTORY</CLSNAME>
+    <LANGU>E</LANGU>
+    <DESCRIPT>Factory to create repository access</DESCRIPT>
+    <EXPOSURE>2</EXPOSURE>
+    <STATE>1</STATE>
+    <UNICODE>X</UNICODE>
+   </VSEOINTERF>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZIF_I18NCHK_REP_ACCESS_FACTORY</CLSNAME>
+     <CMPNAME>CREATE_REPO_ACCESS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Creates Repository access for BSP app</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
