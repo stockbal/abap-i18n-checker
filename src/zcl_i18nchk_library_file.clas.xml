@@ -3,27 +3,20 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
+    <CLSNAME>ZCL_I18NCHK_LIBRARY_FILE</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Message util</DESCRIPT>
+    <DESCRIPT>Handles retrieve of library file (.library) information</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
-    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>FILL_TEXT</CMPNAME>
+     <CLSNAME>ZCL_I18NCHK_LIBRARY_FILE</CLSNAME>
+     <CMPNAME>GET_LIBRARY_ID</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Fills text with placeholder values</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>SPLIT_STRING_TO_SYMSG</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Splits text into sy-msg variables</DESCRIPT>
+     <DESCRIPT>Returns the id of the library</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

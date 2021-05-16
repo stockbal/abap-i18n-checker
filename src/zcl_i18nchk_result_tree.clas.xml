@@ -3,27 +3,26 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
+    <CLSNAME>ZCL_I18NCHK_RESULT_TREE</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Message util</DESCRIPT>
+    <DESCRIPT>Tree output for check result</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
-    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>FILL_TEXT</CMPNAME>
+     <CLSNAME>ZCL_I18NCHK_RESULT_TREE</CLSNAME>
+     <CMPNAME>CONSTRUCTOR</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Fills text with placeholder values</DESCRIPT>
+     <DESCRIPT>Creates new tree output</DESCRIPT>
     </SEOCOMPOTX>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>SPLIT_STRING_TO_SYMSG</CMPNAME>
+     <CLSNAME>ZCL_I18NCHK_RESULT_TREE</CLSNAME>
+     <CMPNAME>DISPLAY</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Splits text into sy-msg variables</DESCRIPT>
+     <DESCRIPT>Displays the tree in the default screen</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

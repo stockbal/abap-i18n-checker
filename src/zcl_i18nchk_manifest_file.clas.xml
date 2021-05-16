@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_I18NCHK_I18N_FILE_UTILITY</CLSNAME>
+    <CLSNAME>ZCL_I18NCHK_MANIFEST_FILE</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Utilities for i18n file handling</DESCRIPT>
+    <DESCRIPT>Handles retrieve of manifest file information</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
@@ -13,10 +13,10 @@
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_I18N_FILE_UTILITY</CLSNAME>
-     <CMPNAME>CONVERT_TO_KEY_VALUE_PAIRS</CMPNAME>
+     <CLSNAME>ZCL_I18NCHK_MANIFEST_FILE</CLSNAME>
+     <CMPNAME>GET_ID</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Converts i18n file content to key/value pairs</DESCRIPT>
+     <DESCRIPT>Returns the id of the library</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

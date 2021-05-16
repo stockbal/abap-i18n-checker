@@ -3,27 +3,20 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
+    <CLSNAME>ZCL_I18NCHK_I18N_UTIL</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Message util</DESCRIPT>
+    <DESCRIPT>Utilities for i18n file handling</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
     <UNICODE>X</UNICODE>
-    <WITH_UNIT_TESTS>X</WITH_UNIT_TESTS>
    </VSEOCLASS>
    <DESCRIPTIONS>
     <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>FILL_TEXT</CMPNAME>
+     <CLSNAME>ZCL_I18NCHK_I18N_UTIL</CLSNAME>
+     <CMPNAME>CONVERT_TO_KEY_VALUE_PAIRS</CMPNAME>
      <LANGU>E</LANGU>
-     <DESCRIPT>Fills text with placeholder values</DESCRIPT>
-    </SEOCOMPOTX>
-    <SEOCOMPOTX>
-     <CLSNAME>ZCL_I18NCHK_MESSAGE_UTIL</CLSNAME>
-     <CMPNAME>SPLIT_STRING_TO_SYMSG</CMPNAME>
-     <LANGU>E</LANGU>
-     <DESCRIPT>Splits text into sy-msg variables</DESCRIPT>
+     <DESCRIPT>Converts i18n file content to key/value pairs</DESCRIPT>
     </SEOCOMPOTX>
    </DESCRIPTIONS>
   </asx:values>

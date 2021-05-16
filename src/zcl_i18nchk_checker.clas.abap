@@ -11,16 +11,18 @@ CLASS zcl_i18nchk_checker DEFINITION
       constructor
         IMPORTING
           bsp_name_range   TYPE zif_i18nchk_ty_global=>ty_bsp_range
-          source_language  TYPE laiso
-          target_languages TYPE zif_i18nchk_ty_global=>ty_i18n_languages
-        RAISING
-          zcx_i18nchk_error,
+          default_language TYPE string DEFAULT 'en'
+          target_languages TYPE zif_i18nchk_ty_global=>ty_i18n_languages,
       "! <p class="shorttext synchronized" lang="en">Starts check for missing/incomplete translations</p>
       check_translations,
       "! <p class="shorttext synchronized" lang="en">Returns i18n check result</p>
       get_check_result
         RETURNING
-          VALUE(result) TYPE zif_i18nchk_ty_global=>ty_check_results.
+          VALUE(result) TYPE zif_i18nchk_ty_global=>ty_check_results,
+      "! <p class="shorttext synchronized" lang="en">Returns the number of UI5 reps without i18n errors</p>
+      get_error_free_ui5_rep_count
+        RETURNING
+          VALUE(result) TYPE i.
   PROTECTED SECTION.
   PRIVATE SECTION.
     CONSTANTS:
@@ -31,7 +33,13 @@ CLASS zcl_i18nchk_checker DEFINITION
       c_library_manifest TYPE string VALUE '.library',
 
       BEGIN OF c_messages,
-        language_missing TYPE string VALUE 'The language {0} is missing for file {1}',
+        language_missing         TYPE string VALUE `The language '{1}' is missing for file '{2}'`,
+        default_language_missing TYPE string VALUE `The default language file is missing at path '{1}'`,
+        key_missing              TYPE string VALUE `Key '{1}' is missing`,
+        value_missing            TYPE string VALUE `There is no value for key '{1}'`,
+        same_key_value           TYPE string VALUE `The value for '{1}' equals the default value '{2}'`,
+        different_key_value      TYPE string VALUE `The value for '{1}' differs from the default value '{2}'`,
+        default_key_missing      TYPE string VALUE `There is no entry for '{1}' in the default file '{2}'`,
       END OF c_messages.
 
     TYPES:
@@ -79,11 +87,12 @@ CLASS zcl_i18nchk_checker DEFINITION
       current_repo_access        TYPE REF TO zif_i18nchk_rep_access,
       repo_access_factory        TYPE REF TO zif_i18nchk_rep_access_factory,
       bsp_name_range             TYPE zif_i18nchk_ty_global=>ty_bsp_range,
-      source_language            TYPE sy-langu,
+      default_language           TYPE string,
       target_languages           TYPE RANGE OF string,
       all_languages              TYPE RANGE OF string,
       ui5_apps                   TYPE TABLE OF ty_ui5_bsp,
       check_results              TYPE zif_i18nchk_ty_global=>ty_check_results,
+      ui5_rep_no_errors_count    TYPE i,
       current_check_result       TYPE zif_i18nchk_ty_global=>ty_check_result,
       i18n_comment_pattern_range TYPE zif_i18nchk_ty_global=>ty_comment_patterns.
 
@@ -116,7 +125,14 @@ CLASS zcl_i18nchk_checker DEFINITION
         IMPORTING
           file          TYPE zif_i18nchk_ty_global=>ty_i18n_file_int
         RETURNING
-          VALUE(result) TYPE zif_i18nchk_ty_global=>ty_i18n_texts.
+          VALUE(result) TYPE zif_i18nchk_ty_global=>ty_i18n_texts,
+      compare_texts
+        IMPORTING
+          base             TYPE zif_i18nchk_ty_global=>ty_i18n_texts
+          base_file        TYPE zif_i18nchk_ty_global=>ty_i18n_file
+          compare          TYPE zif_i18nchk_ty_global=>ty_i18n_texts
+          compare_file     TYPE zif_i18nchk_ty_global=>ty_i18n_file
+          compare_language TYPE string.
 ENDCLASS.
 
 
@@ -127,15 +143,11 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
   METHOD constructor.
     me->repo_reader = NEW zcl_i18nchk_repo_reader( ).
     me->repo_access_factory = NEW zcl_i18nchk_rep_access_factory( ).
-    me->source_language = source_language.
+    me->default_language = default_language.
     me->bsp_name_range = bsp_name_range.
     me->target_languages = VALUE #( FOR language IN target_languages ( sign = 'I' option = 'EQ' low = language ) ).
-    IF source_language IN me->target_languages.
-      RAISE EXCEPTION TYPE zcx_i18nchk_error
-        EXPORTING
-          text = |Source language '{ source_language }' is included in list of target language|.
-    ENDIF.
-    all_languages = VALUE #( BASE me->target_languages ( sign = 'I' option = 'EQ' low = source_language ) ).
+    " include the default language, i.e. the properties file without a locale (e.g. i18n.properties/messagebundle.properties)
+    all_languages = VALUE #( BASE me->target_languages ( sign = 'I' option = 'EQ' low = space ) ).
     i18n_comment_pattern_range = VALUE zif_i18nchk_ty_global=>ty_comment_patterns(
       ( sign = 'I' option = 'CP' low = '##*' ) ).
   ENDMETHOD.
@@ -149,6 +161,11 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
   METHOD get_check_result.
     result = check_results.
+  ENDMETHOD.
+
+
+  METHOD get_error_free_ui5_rep_count.
+    result = ui5_rep_no_errors_count.
   ENDMETHOD.
 
 
@@ -182,6 +199,8 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
       IF current_check_result-i18n_results IS NOT INITIAL.
         check_results = VALUE #( BASE check_results ( current_check_result ) ).
+      ELSE.
+        ADD 1 TO ui5_rep_no_errors_count.
       ENDIF.
     ENDLOOP.
 
@@ -196,8 +215,17 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
     LOOP AT i18n_file_groups ASSIGNING FIELD-SYMBOL(<i18n_file_group>).
 
-      LOOP AT <i18n_file_group>-files ASSIGNING FIELD-SYMBOL(<i18n_file>).
+      " 1) get the default file
+      ASSIGN <i18n_file_group>-files[ language = space ] TO FIELD-SYMBOL(<default_i18n_file>).
+      DATA(default_file_texts) = get_i18n_file_texts( <default_i18n_file> ).
+
+      LOOP AT <i18n_file_group>-files ASSIGNING FIELD-SYMBOL(<i18n_file>) WHERE language <> space.
         DATA(i18n_texts) = get_i18n_file_texts( file = <i18n_file> ).
+        compare_texts( base             = default_file_texts
+                       base_file        = CORRESPONDING #( <default_i18n_file> )
+                       compare          = i18n_texts
+                       compare_file     = CORRESPONDING #( <i18n_file> )
+                       compare_language = <i18n_file>-language ).
       ENDLOOP.
 
     ENDLOOP.
@@ -231,6 +259,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         is_app    = is_app
         file_name = file_name ).
 
+      " Other language files are not of interest at the moment
       CHECK language IN all_languages.
 
       file_group-files = VALUE #( BASE file_group-files
@@ -250,6 +279,9 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
 
   METHOD check_file_existence.
+    DATA: language_missing_msg TYPE string,
+          message_type         TYPE zif_i18nchk_ty_global=>ty_message_type.
+
     result = abap_true.
     IF lines( file_group-files ) = lines( all_languages ).
       RETURN.
@@ -260,17 +292,26 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
       IF NOT line_exists( file_group-files[ language = language_key-low ] ).
         CLEAR result.
 
-        DATA(language_missing_msg) = c_messages-language_missing.
-        REPLACE FIRST OCCURRENCE OF '{0}' IN language_missing_msg WITH language_key-low.
-        DATA(file_name) = |{ file_group-path }/| && COND #(
-          WHEN is_app = abap_true THEN |{ c_app_i18n_prefix }{ c_i18n_file_suffix }|
-          ELSE |{ c_lib_i18n_prefix }{ c_i18n_file_suffix }| ).
+        IF language_key-low = space.
+          language_missing_msg = zcl_i18nchk_message_util=>fill_text(
+            text               = c_messages-default_language_missing
+            placeholder_values = VALUE #( ( file_group-path ) ) ).
+          message_type = zif_i18nchk_c_msg_types=>missing_default_i18n_file.
+        ELSE.
+          DATA(file_name) = |{ file_group-path }/| && COND #(
+            WHEN is_app = abap_true THEN |{ c_app_i18n_prefix }{ c_i18n_file_suffix }|
+            ELSE |{ c_lib_i18n_prefix }{ c_i18n_file_suffix }| ).
+          message_type = zif_i18nchk_c_msg_types=>missing_i18n_file.
+          language_missing_msg = zcl_i18nchk_message_util=>fill_text(
+            text               = c_messages-language_missing
+            placeholder_values = VALUE #( ( language_key-low ) ( file_name ) ) ).
+        ENDIF.
 
-        REPLACE FIRST OCCURRENCE OF '{1}' IN language_missing_msg
-          WITH file_name.
         APPEND VALUE #(
+          file         = value #( path = file_group-path )
           message      = language_missing_msg
-          message_type = zif_i18nchk_c_msg_types=>missing_i18n_file ) TO current_check_result-i18n_results.
+          sy_msg_type  = 'E'
+          message_type = message_type ) TO current_check_result-i18n_results.
       ENDIF.
     ENDLOOP.
 
@@ -295,7 +336,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
   METHOD read_ui5_repositories.
     DATA(bsp_names) = repo_reader->read( bsp_name_range = bsp_name_range ).
 
-    ui5_apps = value #( for bsp_name in bsp_names ( name = bsp_name ) ).
+    ui5_apps = VALUE #( FOR bsp_name IN bsp_names ( name = bsp_name ) ).
   ENDMETHOD.
 
 
@@ -305,7 +346,75 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
       remove_comments       = abap_true
       comment_pattern_range = i18n_comment_pattern_range ).
 
-    result = zcl_i18nchk_i18n_file_utility=>convert_to_key_value_pairs( contents ).
+    result = zcl_i18nchk_i18n_util=>convert_to_key_value_pairs( contents ).
+  ENDMETHOD.
+
+
+  METHOD compare_texts.
+
+    LOOP AT base ASSIGNING FIELD-SYMBOL(<base_text>).
+
+      ASSIGN compare[ key = <base_text>-key ] TO FIELD-SYMBOL(<compare_text>).
+      IF sy-subrc = 0.
+        IF <compare_text>-value = <base_text>-value.
+
+          IF compare_language <> default_language.
+            APPEND VALUE #(
+              file          = compare_file
+              key           = <base_text>-key
+              value         = <compare_text>-value
+              default_value = <base_text>-value
+              sy_msg_type   = 'E'
+              message_type  = zif_i18nchk_c_msg_types=>i18n_key_with_same_value
+              message       = zcl_i18nchk_message_util=>fill_text(
+                text               = c_messages-same_key_value
+                placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) )
+            ) TO current_check_result-i18n_results.
+          ENDIF.
+        ELSEIF compare_language = default_language.
+          APPEND VALUE #(
+              file          = compare_file
+              key           = <base_text>-key
+              value         = <compare_text>-value
+              default_value = <base_text>-value
+              sy_msg_type   = 'E'
+              message_type  = zif_i18nchk_c_msg_types=>i18n_key_with_different_value
+              message       = zcl_i18nchk_message_util=>fill_text(
+                text               = c_messages-different_key_value
+                placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) )
+            ) TO current_check_result-i18n_results.
+        ENDIF.
+      ELSE.
+        APPEND VALUE #(
+          file          = base_file
+          key           = <base_text>-key
+          default_value = <base_text>-value
+          sy_msg_type   = 'E'
+          message_type  = zif_i18nchk_c_msg_types=>missing_i18n_key
+          message       = zcl_i18nchk_message_util=>fill_text(
+            text               = c_messages-key_missing
+            placeholder_values = VALUE #( ( <base_text>-key ) ) )
+        ) TO current_check_result-i18n_results.
+      ENDIF.
+    ENDLOOP.
+
+    " check if key is missing in base file
+    IF sy-subrc <> 0.
+
+      LOOP AT compare ASSIGNING <compare_text>.
+        APPEND VALUE #(
+          file          = base_file
+          key           = <compare_text>-key
+          value         = <compare_text>-value
+          sy_msg_type   = 'E'
+          message_type  = zif_i18nchk_c_msg_types=>missing_default_i18n_key
+          message       = zcl_i18nchk_message_util=>fill_text(
+            text               = c_messages-default_key_missing
+            placeholder_values = VALUE #( ( <compare_text>-key ) ) )
+        ) TO current_check_result-i18n_results.
+      ENDLOOP.
+
+    ENDIF.
   ENDMETHOD.
 
 ENDCLASS.

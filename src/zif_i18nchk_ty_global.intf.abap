@@ -40,6 +40,7 @@ INTERFACE zif_i18nchk_ty_global
       file          TYPE ty_i18n_file,
       message       TYPE string,
       message_type  TYPE ty_message_type,
+      sy_msg_type   TYPE sy-msgty,
       key           TYPE string,
       value         TYPE string,
       default_value TYPE string,

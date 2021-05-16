@@ -1,5 +1,5 @@
 "! <p class="shorttext synchronized" lang="en">Utilities for i18n file handling</p>
-CLASS zcl_i18nchk_i18n_file_utility DEFINITION
+CLASS zcl_i18nchk_i18n_util DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC.
@@ -10,6 +10,7 @@ CLASS zcl_i18nchk_i18n_file_utility DEFINITION
       convert_to_key_value_pairs
         IMPORTING
           file_content  TYPE string_table
+          sort_keys     TYPE abap_bool DEFAULT abap_true
         RETURNING
           VALUE(result) TYPE zif_i18nchk_ty_global=>ty_i18n_texts.
   PROTECTED SECTION.
@@ -18,7 +19,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_i18nchk_i18n_file_utility IMPLEMENTATION.
+CLASS zcl_i18nchk_i18n_util IMPLEMENTATION.
 
 
   METHOD convert_to_key_value_pairs.
@@ -33,6 +34,10 @@ CLASS zcl_i18nchk_i18n_file_utility IMPLEMENTATION.
         ( key   = condense( tokens[ 1 ] )
           value = condense( tokens[ 2 ] ) ) ).
     ENDLOOP.
+
+    IF sort_keys = abap_true.
+      SORT result BY key.
+    ENDIF.
 
   ENDMETHOD.
 

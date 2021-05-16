@@ -115,13 +115,16 @@ CLASS ltcl_abap_unit DEFINITION FINAL FOR TESTING
     DATA:
       test_data  TYPE ty_repos,
       test_data2 TYPE ty_repos,
+      test_data3 TYPE ty_repos,
+      test_data4 TYPE ty_repos,
       cut        TYPE REF TO zcl_i18nchk_checker.
 
     METHODS:
       setup,
-      test_srclang_in_targetlangs FOR TESTING,
       test_missing_file FOR TESTING,
-      test_missing_key FOR TESTING.
+      test_missing_default_file FOR TESTING,
+      test_missing_key FOR TESTING,
+      test_same_key_value for testing.
 ENDCLASS.
 
 CLASS ltcl_abap_unit IMPLEMENTATION.
@@ -141,6 +144,14 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
     test_data2 = VALUE #(
      ( name = c_test_app1
        map_entries = VALUE #(
+         ( internal_rep = 'B' path = 'i18n/i18n_en.properties' ) )
+       files = VALUE #(
+         ( file    = 'manifest.json' )
+         ( file    = 'i18n/i18n_en.properties' ) ) ) ).
+
+    test_data3 = VALUE #(
+     ( name = c_test_app1
+       map_entries = VALUE #(
          ( internal_rep = 'B' path = 'i18n/i18n.properties' )
          ( internal_rep = 'B' path = 'i18n/i18n_en.properties' )
          ( internal_rep = 'B' path = 'i18n/i18n_de.properties' ) )
@@ -148,15 +159,25 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
          ( file    = 'manifest.json' )
          ( file    = 'i18n/i18n.properties'
            content = VALUE #(
-             ( |button = Click| )
              ( |dialog_title = Warning| ) ) )
          ( file    = 'i18n/i18n_en.properties'
            content = VALUE #(
-             ( |button = Click| )
              ( |dialog_title = Warning| ) ) )
+         ( file    = 'i18n/i18n_de.properties' ) ) ) ).
+
+    test_data4 = VALUE #(
+     ( name = c_test_app1
+       map_entries = VALUE #(
+         ( internal_rep = 'B' path = 'i18n/i18n.properties' )
+         ( internal_rep = 'B' path = 'i18n/i18n_de.properties' ) )
+       files = VALUE #(
+         ( file    = 'manifest.json' )
+         ( file    = 'i18n/i18n.properties'
+           content = VALUE #(
+             ( |button = Click| ) ) )
          ( file    = 'i18n/i18n_de.properties'
            content = VALUE #(
-             ( |button = Drücke| ) ) ) ) ) ).
+             ( |button = Click| ) ) ) ) ) ).
   ENDMETHOD.
 
 
@@ -164,24 +185,10 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD test_srclang_in_targetlangs.
-    TRY.
-        cut = NEW zcl_i18nchk_checker(
-          bsp_name_range   = VALUE #( )
-          source_language  = ''
-          target_languages = VALUE #( ( `` ) ) ).
-      CATCH zcx_i18nchk_error INTO DATA(error).
-    ENDTRY.
-
-    cl_abap_unit_assert=>assert_bound( act = error ).
-  ENDMETHOD.
-
-
   METHOD test_missing_file.
     TRY.
         cut = NEW zcl_i18nchk_checker(
           bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
-          source_language  = ''
           target_languages = VALUE #( ( `de` ) ) ).
       CATCH zcx_i18nchk_error INTO DATA(error).
     ENDTRY.
@@ -201,12 +208,12 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
   ENDMETHOD.
 
-  METHOD test_missing_key.
+
+  METHOD test_missing_default_file.
     TRY.
         cut = NEW zcl_i18nchk_checker(
           bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
-          source_language  = ''
-          target_languages = VALUE #( ( `de` ) ) ).
+          target_languages = VALUE #( ( `en` ) ) ).
       CATCH zcx_i18nchk_error INTO DATA(error).
     ENDTRY.
     cl_abap_unit_assert=>assert_not_bound( act = error ).
@@ -221,8 +228,54 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
     cl_abap_unit_assert=>assert_not_initial( act = check_results ).
     cl_abap_unit_assert=>assert_true( act = xsdbool(
       line_exists( check_results[
+        bsp_name = c_test_app1 ]-i18n_results[ message_type = zif_i18nchk_c_msg_types=>missing_default_i18n_file ] ) ) ).
+  ENDMETHOD.
+
+
+  METHOD test_missing_key.
+    TRY.
+        cut = NEW zcl_i18nchk_checker(
+          bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
+          target_languages = VALUE #( ( `de` ) ) ).
+      CATCH zcx_i18nchk_error INTO DATA(error).
+    ENDTRY.
+    cl_abap_unit_assert=>assert_not_bound( act = error ).
+
+    cut->repo_access_factory = NEW lcl_repo_access_factory( test_data3 ).
+    cut->repo_reader = NEW lcl_repo_reader( ).
+
+    cut->check_translations( ).
+
+    DATA(check_results) = cut->get_check_result( ).
+
+    cl_abap_unit_assert=>assert_not_initial( act = check_results ).
+    cl_abap_unit_assert=>assert_true( act = xsdbool(
+      line_exists( check_results[
         bsp_name = c_test_app1 ]-i18n_results[ message_type = zif_i18nchk_c_msg_types=>missing_i18n_key ] ) ) ).
 
+  ENDMETHOD.
+
+
+  METHOD test_same_key_value.
+    TRY.
+        cut = NEW zcl_i18nchk_checker(
+          bsp_name_range   = VALUE #( ( sign = 'I' option = 'EQ' low = c_test_app1 ) )
+          target_languages = VALUE #( ( `de` ) ) ).
+      CATCH zcx_i18nchk_error INTO DATA(error).
+    ENDTRY.
+    cl_abap_unit_assert=>assert_not_bound( act = error ).
+
+    cut->repo_access_factory = NEW lcl_repo_access_factory( test_data4 ).
+    cut->repo_reader = NEW lcl_repo_reader( ).
+
+    cut->check_translations( ).
+
+    DATA(check_results) = cut->get_check_result( ).
+
+    cl_abap_unit_assert=>assert_not_initial( act = check_results ).
+    cl_abap_unit_assert=>assert_true( act = xsdbool(
+      line_exists( check_results[
+        bsp_name = c_test_app1 ]-i18n_results[ message_type = zif_i18nchk_c_msg_types=>i18n_key_with_same_value ] ) ) ).
   ENDMETHOD.
 
 ENDCLASS.

@@ -12,9 +12,33 @@
    </PROGDIR>
    <TPOOL>
     <item>
+     <ID>I</ID>
+     <KEY>B01</KEY>
+     <ENTRY>Selection Criteria</ENTRY>
+     <LENGTH>28</LENGTH>
+    </item>
+    <item>
      <ID>R</ID>
      <ENTRY>Checks missing/imcomplete i18n translations</ENTRY>
      <LENGTH>43</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BASEL</KEY>
+     <ENTRY>Default Language</ENTRY>
+     <LENGTH>24</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_BSPAPP</KEY>
+     <ENTRY>UI5 App (Name of BSP)</ENTRY>
+     <LENGTH>29</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_TRGTL</KEY>
+     <ENTRY>Target Languages</ENTRY>
+     <LENGTH>24</LENGTH>
     </item>
    </TPOOL>
   </asx:values>

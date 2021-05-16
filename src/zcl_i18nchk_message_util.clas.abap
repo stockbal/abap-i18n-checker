@@ -9,7 +9,15 @@ CLASS zcl_i18nchk_message_util DEFINITION
       "! <p class="shorttext synchronized" lang="en">Splits text into sy-msg variables</p>
       split_string_to_symsg
         IMPORTING
-          text TYPE string.
+          text TYPE string,
+      "! <p class="shorttext synchronized" lang="en">Fills text with placeholder values</p>
+      "! Placeholders are identified by a number inside curly brackets, e.g. {0}
+      fill_text
+        IMPORTING
+          text               TYPE string
+          placeholder_values TYPE string_table
+        RETURNING
+          VALUE(result)      TYPE string.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -46,5 +54,15 @@ CLASS zcl_i18nchk_message_util IMPLEMENTATION.
     MESSAGE e001(00) WITH msgv1 msgv2 msgv3 msgv4 INTO DATA(msg).
   ENDMETHOD.
 
+
+  METHOD fill_text.
+
+    result = text.
+
+    LOOP AT placeholder_values INTO DATA(placeholder_value).
+      REPLACE ALL OCCURRENCES OF |\{{ sy-tabix }\}| IN result WITH placeholder_value.
+    ENDLOOP.
+
+  ENDMETHOD.
 
 ENDCLASS.
