@@ -10,11 +10,14 @@ CLASS zcl_i18nchk_checker DEFINITION
       "! <p class="shorttext synchronized" lang="en">Creates new instance of i18n checker</p>
       constructor
         IMPORTING
-          bsp_name_range   TYPE zif_i18nchk_ty_global=>ty_bsp_range
-          default_language TYPE string DEFAULT 'en'
-          target_languages TYPE zif_i18nchk_ty_global=>ty_i18n_languages,
+          bsp_name_range           TYPE zif_i18nchk_ty_global=>ty_bsp_range
+          default_language         TYPE string DEFAULT 'en'
+          compare_against_def_file TYPE abap_bool DEFAULT abap_true
+          target_languages         TYPE zif_i18nchk_ty_global=>ty_i18n_languages,
       "! <p class="shorttext synchronized" lang="en">Starts check for missing/incomplete translations</p>
-      check_translations,
+      check_translations
+        RAISING
+          zcx_i18nchk_error,
       "! <p class="shorttext synchronized" lang="en">Returns i18n check result</p>
       get_check_result
         RETURNING
@@ -88,6 +91,7 @@ CLASS zcl_i18nchk_checker DEFINITION
       repo_access_factory        TYPE REF TO zif_i18nchk_rep_access_factory,
       bsp_name_range             TYPE zif_i18nchk_ty_global=>ty_bsp_range,
       default_language           TYPE string,
+      compare_against_def_file   TYPE abap_bool,
       target_languages           TYPE RANGE OF string,
       all_languages              TYPE RANGE OF string,
       ui5_apps                   TYPE TABLE OF ty_ui5_bsp,
@@ -144,6 +148,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
     me->repo_reader = NEW zcl_i18nchk_repo_reader( ).
     me->repo_access_factory = NEW zcl_i18nchk_rep_access_factory( ).
     me->default_language = default_language.
+    me->compare_against_def_file = compare_against_def_file.
     me->bsp_name_range = bsp_name_range.
     me->target_languages = VALUE #( FOR language IN target_languages ( sign = 'I' option = 'EQ' low = language ) ).
     " include the default language, i.e. the properties file without a locale (e.g. i18n.properties/messagebundle.properties)
@@ -193,21 +198,26 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         ( <map_entry> ) ).
 
       CLEAR current_check_result.
-      current_check_result-bsp_name = <ui5_app>-name.
+      current_check_result = VALUE #(
+        bsp_name    = <ui5_app>-name
+        description = <ui5_app>-description ).
 
       validate_translations( ui5_bsp = <ui5_app> ).
-
-      IF current_check_result-i18n_results IS NOT INITIAL.
-        check_results = VALUE #( BASE check_results ( current_check_result ) ).
+      IF line_exists( current_check_result-i18n_results[ sy_msg_type = 'E' ] ).
+        current_check_result-status = 'E'.
+      ELSEIF line_exists( current_check_result-i18n_results[ sy_msg_type = 'W' ] ).
+        current_check_result-status = 'W'.
       ELSE.
-        ADD 1 TO ui5_rep_no_errors_count.
+        current_check_result-status = 'S'.
       ENDIF.
+      check_results = VALUE #( BASE check_results ( current_check_result ) ).
     ENDLOOP.
 
   ENDMETHOD.
 
 
   METHOD validate_translations.
+    FIELD-SYMBOLS: <base_i18n_file> TYPE zif_i18nchk_ty_global=>ty_i18n_file_int.
 
     DATA(i18n_file_groups) = get_relevant_i18n_files(
       map_entries = ui5_bsp-i18n_map_entries
@@ -215,14 +225,22 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
     LOOP AT i18n_file_groups ASSIGNING FIELD-SYMBOL(<i18n_file_group>).
 
-      " 1) get the default file
-      ASSIGN <i18n_file_group>-files[ language = space ] TO FIELD-SYMBOL(<default_i18n_file>).
-      DATA(default_file_texts) = get_i18n_file_texts( <default_i18n_file> ).
+      IF compare_against_def_file = abap_true.
+        ASSIGN <i18n_file_group>-files[ language = space ] TO <base_i18n_file>.
+      ELSE.
+        ASSIGN <i18n_file_group>-files[ language = default_language ] TO <base_i18n_file>.
+        IF sy-subrc <> 0.
+
+          CONTINUE.
+        ENDIF.
+      ENDIF.
+
+      DATA(base_file_texts) = get_i18n_file_texts( <base_i18n_file> ).
 
       LOOP AT <i18n_file_group>-files ASSIGNING FIELD-SYMBOL(<i18n_file>) WHERE language <> space.
         DATA(i18n_texts) = get_i18n_file_texts( file = <i18n_file> ).
-        compare_texts( base             = default_file_texts
-                       base_file        = CORRESPONDING #( <default_i18n_file> )
+        compare_texts( base             = base_file_texts
+                       base_file        = CORRESPONDING #( <base_i18n_file> )
                        compare          = i18n_texts
                        compare_file     = CORRESPONDING #( <i18n_file> )
                        compare_language = <i18n_file>-language ).
@@ -308,7 +326,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         ENDIF.
 
         APPEND VALUE #(
-          file         = value #( path = file_group-path )
+          file         = VALUE #( path = file_group-path )
           message      = language_missing_msg
           sy_msg_type  = 'E'
           message_type = message_type ) TO current_check_result-i18n_results.

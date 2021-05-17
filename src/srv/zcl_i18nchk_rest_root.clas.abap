@@ -25,6 +25,10 @@ CLASS zcl_i18nchk_rest_root IMPLEMENTATION.
       iv_template      = '/checkResults'
       iv_handler_class = 'ZCL_I18NCHK_EXEC_CHK_RES' ).
 
+    router->attach(
+      iv_template      = '/ignoreKeys'
+      iv_handler_class = 'ZCL_I18NCHK_IGNORE_I18NKEY_RES' ).
+
     ro_root_handler = router.
   ENDMETHOD.
 

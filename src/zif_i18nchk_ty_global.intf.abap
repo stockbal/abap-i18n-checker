@@ -49,8 +49,11 @@ INTERFACE zif_i18nchk_ty_global
 
     "! <p class="shorttext synchronized" lang="en">Check result for a single BSP (UI5 Repository)</p>
     BEGIN OF ty_check_result,
-      bsp_name     TYPE o2applname,
-      i18n_results TYPE ty_i18n_check_results,
+      bsp_name      TYPE o2applname,
+      description   TYPE o2descr,
+      status        TYPE sy-msgty,
+      checked_files TYPE i,
+      i18n_results  TYPE ty_i18n_check_results,
     END OF ty_check_result,
 
     ty_check_results TYPE STANDARD TABLE OF ty_check_result WITH KEY bsp_name.

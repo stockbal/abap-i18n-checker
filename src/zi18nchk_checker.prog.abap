@@ -26,9 +26,14 @@ START-OF-SELECTION.
   ENDTRY.
 
 end-of-SELECTION.
-  WRITE: / |Number of UI5 repositories with no errors: { i18n_checker->get_error_free_ui5_rep_count( ) }|.
   DATA(check_results) = i18n_checker->get_check_result( ).
-  IF check_results IS NOT INITIAL.
-    WRITE: / |Number of UI5 repositories with i18n errors: { lines( check_results ) }|.
-  ENDIF.
-  " TODO: print results via zcl_i18nchk_tree_output
+  DATA(repos_without_errors_count) = 0.
+  DATA(repos_with_errors_count) = 0.
+  LOOP AT check_results ASSIGNING FIELD-SYMBOL(<check_result>).
+    IF <check_result>-status = 'S'.
+    ELSE.
+      ADD 1 TO repos_with_errors_count.
+    ENDIF.
+  ENDLOOP.
+  WRITE: / |Number of UI5 repositories with i18n errors: { repos_with_errors_count }| COLOR COL_NEGATIVE.
+  WRITE: / |Number of UI5 repositories without i18n errors: { repos_with_errors_count }| COLOR COL_POSITIVE.
