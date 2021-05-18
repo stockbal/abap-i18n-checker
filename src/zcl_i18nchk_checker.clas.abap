@@ -36,7 +36,7 @@ CLASS zcl_i18nchk_checker DEFINITION
       c_library_manifest TYPE string VALUE '.library',
 
       BEGIN OF c_messages,
-        language_missing         TYPE string VALUE `The language '{1}' is missing for file '{2}'`,
+        language_missing         TYPE string VALUE `The language file for locale '{1}' is missing`,
         default_language_missing TYPE string VALUE `The default language file is missing at path '{1}'`,
         key_missing              TYPE string VALUE `Key '{1}' is missing`,
         value_missing            TYPE string VALUE `There is no value for key '{1}'`,
@@ -153,6 +153,11 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
     me->target_languages = VALUE #( FOR language IN target_languages ( sign = 'I' option = 'EQ' low = language ) ).
     " include the default language, i.e. the properties file without a locale (e.g. i18n.properties/messagebundle.properties)
     all_languages = VALUE #( BASE me->target_languages ( sign = 'I' option = 'EQ' low = space ) ).
+    IF compare_against_def_file = abap_false.
+      all_languages = VALUE #( BASE all_languages ( sign = 'I' option = 'EQ' low = default_language ) ).
+    ENDIF.
+    SORT all_languages.
+    DELETE ADJACENT DUPLICATES FROM all_languages.
     i18n_comment_pattern_range = VALUE zif_i18nchk_ty_global=>ty_comment_patterns(
       ( sign = 'I' option = 'CP' low = '##*' ) ).
   ENDMETHOD.
@@ -200,6 +205,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
       CLEAR current_check_result.
       current_check_result = VALUE #(
         bsp_name    = <ui5_app>-name
+        is_app      = <ui5_app>-is_app
         description = <ui5_app>-description ).
 
       validate_translations( ui5_bsp = <ui5_app> ).
@@ -217,7 +223,14 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
 
   METHOD validate_translations.
+    DATA: excluded_languages TYPE RANGE OF string.
+
     FIELD-SYMBOLS: <base_i18n_file> TYPE zif_i18nchk_ty_global=>ty_i18n_file_int.
+
+    excluded_languages = VALUE #( ( sign = 'E' option = 'EQ' low = space ) ).
+    IF compare_against_def_file = abap_false.
+      APPEND VALUE #( sign = 'E' option = 'EQ' low = default_language ) TO excluded_languages.
+    ENDIF.
 
     DATA(i18n_file_groups) = get_relevant_i18n_files(
       map_entries = ui5_bsp-i18n_map_entries
@@ -227,23 +240,22 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
       IF compare_against_def_file = abap_true.
         ASSIGN <i18n_file_group>-files[ language = space ] TO <base_i18n_file>.
+        CHECK sy-subrc = 0.
       ELSE.
         ASSIGN <i18n_file_group>-files[ language = default_language ] TO <base_i18n_file>.
-        IF sy-subrc <> 0.
-
-          CONTINUE.
-        ENDIF.
+        CHECK sy-subrc = 0.
       ENDIF.
 
       DATA(base_file_texts) = get_i18n_file_texts( <base_i18n_file> ).
 
-      LOOP AT <i18n_file_group>-files ASSIGNING FIELD-SYMBOL(<i18n_file>) WHERE language <> space.
+      LOOP AT <i18n_file_group>-files ASSIGNING FIELD-SYMBOL(<i18n_file>) WHERE language IN excluded_languages.
         DATA(i18n_texts) = get_i18n_file_texts( file = <i18n_file> ).
         compare_texts( base             = base_file_texts
                        base_file        = CORRESPONDING #( <base_i18n_file> )
                        compare          = i18n_texts
                        compare_file     = CORRESPONDING #( <i18n_file> )
                        compare_language = <i18n_file>-language ).
+        ADD 1 TO current_check_result-checked_files.
       ENDLOOP.
 
     ENDLOOP.
@@ -258,13 +270,11 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
     LOOP AT map_entries ASSIGNING FIELD-SYMBOL(<i18n_map_entry>).
       DATA(last_path_offset) = find( val = <i18n_map_entry>-path sub = '/' occ = -1 ).
 
-      CHECK last_path_offset > 0.
-      DATA(path) = <i18n_map_entry>-path(last_path_offset).
+      DATA(path) = `/` && COND #( WHEN last_path_offset > 0 THEN  <i18n_map_entry>-path(last_path_offset) ).
 
       IF last_path <> path AND file_group IS NOT INITIAL.
-        IF check_file_existence( file_group = file_group is_app = is_app ).
-          result = VALUE #( BASE result ( file_group ) ).
-        ENDIF.
+        check_file_existence( file_group = file_group is_app = is_app ).
+        result = VALUE #( BASE result ( file_group ) ).
         CLEAR file_group.
       ENDIF.
 
@@ -288,9 +298,8 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
     ENDLOOP.
 
     IF file_group-files IS NOT INITIAL.
-      IF check_file_existence( file_group = file_group is_app = is_app ).
-        result = VALUE #( BASE result ( file_group ) ).
-      ENDIF.
+      check_file_existence( file_group = file_group is_app = is_app ).
+      result = VALUE #( BASE result ( file_group ) ).
     ENDIF.
 
   ENDMETHOD.
@@ -298,7 +307,8 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
   METHOD check_file_existence.
     DATA: language_missing_msg TYPE string,
-          message_type         TYPE zif_i18nchk_ty_global=>ty_message_type.
+          message_type         TYPE zif_i18nchk_ty_global=>ty_message_type,
+          file_name            TYPE string.
 
     result = abap_true.
     IF lines( file_group-files ) = lines( all_languages ).
@@ -311,14 +321,17 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         CLEAR result.
 
         IF language_key-low = space.
+          file_name = COND #(
+            WHEN is_app = abap_true THEN |{ c_app_i18n_prefix }{ c_i18n_file_suffix }|
+            ELSE |{ c_lib_i18n_prefix }{ c_i18n_file_suffix }| ).
           language_missing_msg = zcl_i18nchk_message_util=>fill_text(
             text               = c_messages-default_language_missing
             placeholder_values = VALUE #( ( file_group-path ) ) ).
           message_type = zif_i18nchk_c_msg_types=>missing_default_i18n_file.
         ELSE.
-          DATA(file_name) = |{ file_group-path }/| && COND #(
-            WHEN is_app = abap_true THEN |{ c_app_i18n_prefix }{ c_i18n_file_suffix }|
-            ELSE |{ c_lib_i18n_prefix }{ c_i18n_file_suffix }| ).
+          file_name = COND #(
+            WHEN is_app = abap_true THEN |{ c_app_i18n_prefix }_{ language_key-low }{ c_i18n_file_suffix }|
+            ELSE |{ c_lib_i18n_prefix }_{ language_key-low }{ c_i18n_file_suffix }| ).
           message_type = zif_i18nchk_c_msg_types=>missing_i18n_file.
           language_missing_msg = zcl_i18nchk_message_util=>fill_text(
             text               = c_messages-language_missing
@@ -326,7 +339,9 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         ENDIF.
 
         APPEND VALUE #(
-          file         = VALUE #( path = file_group-path )
+          file         = VALUE #(
+            name = file_name
+            path = file_group-path )
           message      = language_missing_msg
           sy_msg_type  = 'E'
           message_type = message_type ) TO current_check_result-i18n_results.

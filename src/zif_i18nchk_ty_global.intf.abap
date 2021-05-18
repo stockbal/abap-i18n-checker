@@ -50,6 +50,7 @@ INTERFACE zif_i18nchk_ty_global
     "! <p class="shorttext synchronized" lang="en">Check result for a single BSP (UI5 Repository)</p>
     BEGIN OF ty_check_result,
       bsp_name      TYPE o2applname,
+      is_app        TYPE abap_bool,
       description   TYPE o2descr,
       status        TYPE sy-msgty,
       checked_files TYPE i,

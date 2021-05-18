@@ -37,21 +37,31 @@ CLASS zcl_i18nchk_exec_chk_res IMPLEMENTATION.
       FOR keyvalue IN mo_request->get_uri_query_parameters( iv_name = c_parameters-target_language )
       ( keyvalue-value ) ).
     bsp_name_range = VALUE #(
-      FOR keyvalue IN mo_request->get_uri_query_parameters( iv_name = c_parameters-bsp_name )
+      FOR keyvalue IN mo_request->get_uri_query_parameters(
+                        iv_name    = c_parameters-bsp_name
+                        iv_encoded = abap_false )
       ( sign   = 'I'
         option = COND #( WHEN keyvalue-value CS '*' THEN 'CP' ELSE 'EQ' )
         low    = CONV #( keyvalue-value ) ) ).
 
     " execute the checks
     DATA(i18n_checker) = NEW zcl_i18nchk_checker(
-      bsp_name_range   = bsp_name_range
-      default_language = default_language
-      target_languages = target_languages ).
+      bsp_name_range           = bsp_name_range
+      default_language         = default_language
+      compare_against_def_file = compare_against_default
+      target_languages         = target_languages ).
 
-    i18n_checker->check_translations( ).
+
+    TRY.
+        i18n_checker->check_translations( ).
+      CATCH zcx_i18nchk_error INTO DATA(error).
+        mo_response->set_status( 500 ).
+        mo_response->set_reason( error->get_text( ) ).
+        RETURN.
+    ENDTRY.
+
 
     DATA(entity) = mo_response->create_entity( ).
-
     DATA(json) =  /ui2/cl_json=>serialize(
       data             = i18n_checker->get_check_result( )
       pretty_name      = /ui2/cl_json=>pretty_mode-camel_case ).
