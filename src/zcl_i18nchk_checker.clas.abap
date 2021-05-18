@@ -36,13 +36,13 @@ CLASS zcl_i18nchk_checker DEFINITION
       c_library_manifest TYPE string VALUE '.library',
 
       BEGIN OF c_messages,
-        language_missing         TYPE string VALUE `The language file for locale '{1}' is missing`,
-        default_language_missing TYPE string VALUE `The default language file is missing at path '{1}'`,
-        key_missing              TYPE string VALUE `Key '{1}' is missing`,
-        value_missing            TYPE string VALUE `There is no value for key '{1}'`,
-        same_key_value           TYPE string VALUE `The value for '{1}' equals the default value '{2}'`,
-        different_key_value      TYPE string VALUE `The value for '{1}' differs from the default value '{2}'`,
-        default_key_missing      TYPE string VALUE `There is no entry for '{1}' in the default file '{2}'`,
+        language_missing         TYPE string VALUE `The language file for locale <strong>{1}</strong> is missing`,
+        default_language_missing TYPE string VALUE `The default language file is missing at path <strong>{1}</strong>`,
+        key_missing              TYPE string VALUE `Key <strong>{1}</strong> is missing`,
+        value_missing            TYPE string VALUE `There is no value for key <strong>{1}</strong>`,
+        same_key_value           TYPE string VALUE `The value for <strong>{1}</strong> equals the default value <strong>{2}</strong>`,
+        different_key_value      TYPE string VALUE `The value for <strong>{1}</strong> differs from the default value <strong>{2}</strong>`,
+        default_key_missing      TYPE string VALUE `There is no entry for <strong>{1}</strong> in the default file <strong>{2}</strong>`,
       END OF c_messages.
 
     TYPES:
