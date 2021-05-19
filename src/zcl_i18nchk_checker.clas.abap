@@ -420,7 +420,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         ENDIF.
       ELSE.
         APPEND VALUE #(
-          file          = base_file
+          file          = compare_file
           key           = <base_text>-key
           default_value = <base_text>-value
           sy_msg_type   = 'E'
