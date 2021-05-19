@@ -64,7 +64,8 @@ CLASS zcl_i18nchk_exec_chk_res IMPLEMENTATION.
     DATA(entity) = mo_response->create_entity( ).
     DATA(json) =  /ui2/cl_json=>serialize(
       data             = i18n_checker->get_check_result( )
-      pretty_name      = /ui2/cl_json=>pretty_mode-camel_case ).
+      pretty_name      = /ui2/cl_json=>pretty_mode-camel_case
+      compress         = abap_true ).
     entity->set_string_data( json ).
     mo_response->set_status( 200 ).
   ENDMETHOD.
