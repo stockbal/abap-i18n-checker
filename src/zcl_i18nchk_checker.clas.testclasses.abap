@@ -34,7 +34,7 @@ CLASS lcl_repo_reader IMPLEMENTATION.
 
     bsp_apps = VALUE #( ( c_test_app1 ) ( c_test_app2 ) ).
 
-    result = VALUE #( FOR bsp_app IN bsp_apps WHERE ( table_line IN bsp_name_range ) ( bsp_app ) ).
+    result = VALUE #( FOR bsp_app IN bsp_apps WHERE ( table_line IN bsp_name_range ) ( bsp_name = bsp_app ) ).
   ENDMETHOD.
 
 ENDCLASS.
@@ -124,7 +124,7 @@ CLASS ltcl_abap_unit DEFINITION FINAL FOR TESTING
       test_missing_file FOR TESTING,
       test_missing_default_file FOR TESTING,
       test_missing_key FOR TESTING,
-      test_same_key_value for testing.
+      test_same_key_value FOR TESTING.
 ENDCLASS.
 
 CLASS ltcl_abap_unit IMPLEMENTATION.

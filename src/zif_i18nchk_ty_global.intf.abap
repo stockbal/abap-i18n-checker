@@ -17,6 +17,14 @@ INTERFACE zif_i18nchk_ty_global
 
     ty_i18n_texts TYPE STANDARD TABLE OF ty_i18n_text WITH KEY key,
 
+    "! <p class="shorttext synchronized" lang="en">Information about BSP</p>
+    BEGIN OF ty_bsp_info,
+      bsp_name TYPE o2applname,
+      git_url  TYPE string,
+    END OF ty_bsp_info,
+
+    ty_bsP_infos TYPE STANDARD TABLE OF ty_bsp_info WITH EMPTY KEY,
+
     "! <p class="shorttext synchronized" lang="en">UI5 repository data</p>
     BEGIN OF ty_ui5_repo,
       name               TYPE o2appl-applname,
@@ -38,6 +46,7 @@ INTERFACE zif_i18nchk_ty_global
     "! <p class="shorttext synchronized" lang="en">Check result for specific i18n file</p>
     BEGIN OF ty_i18n_check_result,
       file          TYPE ty_i18n_file,
+      ignored       TYPE abap_bool,
       message       TYPE string,
       message_type  TYPE ty_message_type,
       sy_msg_type   TYPE sy-msgty,
@@ -50,6 +59,7 @@ INTERFACE zif_i18nchk_ty_global
     "! <p class="shorttext synchronized" lang="en">Check result for a single BSP (UI5 Repository)</p>
     BEGIN OF ty_check_result,
       bsp_name      TYPE o2applname,
+      git_url       TYPE string,
       is_app        TYPE abap_bool,
       description   TYPE o2descr,
       status        TYPE sy-msgty,

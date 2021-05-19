@@ -94,7 +94,7 @@ CLASS zcl_i18nchk_checker DEFINITION
       compare_against_def_file   TYPE abap_bool,
       target_languages           TYPE RANGE OF string,
       all_languages              TYPE RANGE OF string,
-      ui5_apps                   TYPE TABLE OF ty_ui5_bsp,
+      bsp_infos                  TYPE zif_i18nchk_ty_global=>ty_bsp_infos,
       check_results              TYPE zif_i18nchk_ty_global=>ty_check_results,
       ui5_rep_no_errors_count    TYPE i,
       current_check_result       TYPE zif_i18nchk_ty_global=>ty_check_result,
@@ -181,9 +181,11 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
   METHOD validate_ui5_repositories.
 
-    LOOP AT ui5_apps ASSIGNING FIELD-SYMBOL(<ui5_app>).
-      current_repo_access = repo_access_factory->create_repo_access( <ui5_app>-name ).
-      <ui5_app>-description = current_repo_access->get_bsp_description( ).
+    LOOP AT bsp_infos ASSIGNING FIELD-SYMBOL(<bsp_info>).
+      current_repo_access = repo_access_factory->create_repo_access( <bsp_info>-bsp_name ).
+      DATA(ui5_repo) = VALUE zif_i18nchk_ty_global=>ty_ui5_repo(
+        name               = <bsp_info>-bsp_name
+        description        = current_repo_access->get_bsp_description( ) ).
       TRY.
           DATA(mapping_entries) = current_repo_access->get_ui5_app_map_entries( ).
         CATCH /ui5/cx_ui5_rep ##NO_HANDLER.
@@ -192,23 +194,24 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
       CHECK mapping_entries IS NOT INITIAL.
 
-      <ui5_app>-manifest_map_entry = VALUE #( mapping_entries[ path = c_app_manifest ] OPTIONAL ).
-      <ui5_app>-library_map_entry =  VALUE #( mapping_entries[ path = c_library_manifest ] OPTIONAL ).
-      <ui5_app>-is_app = xsdbool( <ui5_app>-library_map_entry IS INITIAL ).
-      <ui5_app>-i18n_map_entries = VALUE #(
+      ui5_repo-manifest_map_entry = VALUE #( mapping_entries[ path = c_app_manifest ] OPTIONAL ).
+      ui5_repo-library_map_entry =  VALUE #( mapping_entries[ path = c_library_manifest ] OPTIONAL ).
+      ui5_repo-is_app = xsdbool( ui5_repo-library_map_entry IS INITIAL ).
+      ui5_repo-i18n_map_entries = VALUE #(
         FOR <map_entry> IN mapping_entries
         WHERE ( path CP COND #(
-                          WHEN <ui5_app>-is_app = abap_true THEN |{ c_app_i18n_prefix }*{ c_i18n_file_suffix }|
+                          WHEN ui5_repo-is_app = abap_true THEN |{ c_app_i18n_prefix }*{ c_i18n_file_suffix }|
                           ELSE |{ c_lib_i18n_prefix }*{ c_i18n_file_suffix }| ) )
         ( <map_entry> ) ).
 
       CLEAR current_check_result.
       current_check_result = VALUE #(
-        bsp_name    = <ui5_app>-name
-        is_app      = <ui5_app>-is_app
-        description = <ui5_app>-description ).
+        bsp_name    = ui5_repo-name
+        git_url     = <bsp_info>-git_url
+        is_app      = ui5_repo-is_app
+        description = ui5_repo-description ).
 
-      validate_translations( ui5_bsp = <ui5_app> ).
+      validate_translations( ui5_bsp = ui5_repo ).
       IF line_exists( current_check_result-i18n_results[ sy_msg_type = 'E' ] ).
         current_check_result-status = 'E'.
       ELSEIF line_exists( current_check_result-i18n_results[ sy_msg_type = 'W' ] ).
@@ -367,9 +370,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
 
 
   METHOD read_ui5_repositories.
-    DATA(bsp_names) = repo_reader->read( bsp_name_range = bsp_name_range ).
-
-    ui5_apps = VALUE #( FOR bsp_name IN bsp_names ( name = bsp_name ) ).
+    bsp_infos = repo_reader->read( bsp_name_range = bsp_name_range ).
   ENDMETHOD.
 
 

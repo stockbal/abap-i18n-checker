@@ -8,6 +8,6 @@ INTERFACE zif_i18nchk_repo_reader
       IMPORTING
         bsp_name_range TYPE zif_i18nchk_ty_global=>ty_bsp_range
       RETURNING
-        VALUE(result)  TYPE zif_i18nchk_ty_global=>ty_bsp_names.
+        VALUE(result)  TYPE zif_i18nchk_ty_global=>ty_bsp_infos.
 
 ENDINTERFACE.
