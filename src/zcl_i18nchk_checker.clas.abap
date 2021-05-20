@@ -13,6 +13,7 @@ CLASS zcl_i18nchk_checker DEFINITION
           bsp_name_range           TYPE zif_i18nchk_ty_global=>ty_bsp_range
           default_language         TYPE string DEFAULT 'en'
           compare_against_def_file TYPE abap_bool DEFAULT abap_true
+          return_ignored_entries   TYPE abap_bool OPTIONAL
           target_languages         TYPE zif_i18nchk_ty_global=>ty_i18n_languages,
       "! <p class="shorttext synchronized" lang="en">Starts check for missing/incomplete translations</p>
       check_translations
@@ -88,10 +89,12 @@ CLASS zcl_i18nchk_checker DEFINITION
     DATA:
       repo_reader                TYPE REF TO zif_i18nchk_repo_reader,
       current_repo_access        TYPE REF TO zif_i18nchk_rep_access,
+      ignored_entries_reader     TYPE REF TO zif_i18nchk_ign_entry_reader,
       repo_access_factory        TYPE REF TO zif_i18nchk_rep_access_factory,
       bsp_name_range             TYPE zif_i18nchk_ty_global=>ty_bsp_range,
       default_language           TYPE string,
       compare_against_def_file   TYPE abap_bool,
+      return_ignored_entries     TYPE abap_bool,
       target_languages           TYPE RANGE OF string,
       all_languages              TYPE RANGE OF string,
       bsp_infos                  TYPE zif_i18nchk_ty_global=>ty_bsp_infos,
@@ -136,7 +139,10 @@ CLASS zcl_i18nchk_checker DEFINITION
           base_file        TYPE zif_i18nchk_ty_global=>ty_i18n_file
           compare          TYPE zif_i18nchk_ty_global=>ty_i18n_texts
           compare_file     TYPE zif_i18nchk_ty_global=>ty_i18n_file
-          compare_language TYPE string.
+          compare_language TYPE string,
+      add_check_result
+        IMPORTING
+          check_result TYPE zif_i18nchk_ty_global=>ty_i18n_check_result.
 ENDCLASS.
 
 
@@ -147,6 +153,8 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
   METHOD constructor.
     me->repo_reader = NEW zcl_i18nchk_repo_reader( ).
     me->repo_access_factory = NEW zcl_i18nchk_rep_access_factory( ).
+    me->return_ignored_entries = return_ignored_entries.
+    me->ignored_entries_reader = NEW zcl_i18nchk_ign_entry_reader( ).
     me->default_language = default_language.
     me->compare_against_def_file = compare_against_def_file.
     me->bsp_name_range = bsp_name_range.
@@ -341,13 +349,13 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
             placeholder_values = VALUE #( ( language_key-low ) ( file_name ) ) ).
         ENDIF.
 
-        APPEND VALUE #(
+        add_check_result( VALUE #(
           file         = VALUE #(
             name = file_name
             path = file_group-path )
           message      = language_missing_msg
           sy_msg_type  = 'E'
-          message_type = message_type ) TO current_check_result-i18n_results.
+          message_type = message_type ) ).
       ENDIF.
     ENDLOOP.
 
@@ -393,7 +401,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
         IF <compare_text>-value = <base_text>-value.
 
           IF compare_language <> default_language.
-            APPEND VALUE #(
+            add_check_result( VALUE #(
               file          = compare_file
               key           = <base_text>-key
               value         = <compare_text>-value
@@ -402,24 +410,22 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
               message_type  = zif_i18nchk_c_msg_types=>i18n_key_with_same_value
               message       = zcl_i18nchk_message_util=>fill_text(
                 text               = c_messages-same_key_value
-                placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) )
-            ) TO current_check_result-i18n_results.
+                placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) ) ) ).
           ENDIF.
         ELSEIF compare_language = default_language.
-          APPEND VALUE #(
-              file          = compare_file
-              key           = <base_text>-key
-              value         = <compare_text>-value
-              default_value = <base_text>-value
-              sy_msg_type   = 'E'
-              message_type  = zif_i18nchk_c_msg_types=>i18n_key_with_different_value
-              message       = zcl_i18nchk_message_util=>fill_text(
-                text               = c_messages-different_key_value
-                placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) )
-            ) TO current_check_result-i18n_results.
+          add_check_result( VALUE #(
+            file          = compare_file
+            key           = <base_text>-key
+            value         = <compare_text>-value
+            default_value = <base_text>-value
+            sy_msg_type   = 'E'
+            message_type  = zif_i18nchk_c_msg_types=>i18n_key_with_different_value
+            message       = zcl_i18nchk_message_util=>fill_text(
+              text               = c_messages-different_key_value
+              placeholder_values = VALUE #( ( <base_text>-key ) ( <base_text>-value ) ) ) ) ).
         ENDIF.
       ELSE.
-        APPEND VALUE #(
+        add_check_result( VALUE #(
           file          = compare_file
           key           = <base_text>-key
           default_value = <base_text>-value
@@ -427,8 +433,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
           message_type  = zif_i18nchk_c_msg_types=>missing_i18n_key
           message       = zcl_i18nchk_message_util=>fill_text(
             text               = c_messages-key_missing
-            placeholder_values = VALUE #( ( <base_text>-key ) ) )
-        ) TO current_check_result-i18n_results.
+            placeholder_values = VALUE #( ( <base_text>-key ) ) ) ) ).
       ENDIF.
     ENDLOOP.
 
@@ -436,7 +441,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
     IF sy-subrc <> 0.
 
       LOOP AT compare ASSIGNING <compare_text>.
-        APPEND VALUE #(
+        add_check_result( VALUE #(
           file          = base_file
           key           = <compare_text>-key
           value         = <compare_text>-value
@@ -444,11 +449,29 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
           message_type  = zif_i18nchk_c_msg_types=>missing_default_i18n_key
           message       = zcl_i18nchk_message_util=>fill_text(
             text               = c_messages-default_key_missing
-            placeholder_values = VALUE #( ( <compare_text>-key ) ) )
-        ) TO current_check_result-i18n_results.
+            placeholder_values = VALUE #( ( <compare_text>-key ) ) ) ) ).
       ENDLOOP.
 
     ENDIF.
+  ENDMETHOD.
+
+  METHOD add_check_result.
+
+    DATA(ignored_entry) = ignored_entries_reader->get_ignored_entry(
+      bsp_name     = current_check_result-bsp_name
+      file_path    = check_result-file-path
+      file_name    = check_result-file-name
+      message_type = check_result-message_type
+      i18n_key     = check_result-key ).
+    IF ignored_entry IS NOT INITIAL.
+      IF return_ignored_entries = abap_true.
+        INSERT check_result INTO TABLE current_check_result-i18n_results ASSIGNING FIELD-SYMBOL(<added_check_result>).
+        <added_check_result>-ign_entry_uuid = ignored_entry-ign_entry_uuid.
+      ENDIF.
+    ELSE.
+      INSERT check_result INTO TABLE current_check_result-i18n_results.
+    ENDIF.
+
   ENDMETHOD.
 
 ENDCLASS.

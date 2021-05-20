@@ -3,12 +3,13 @@ INTERFACE zif_i18nchk_ty_global
   PUBLIC .
 
   TYPES:
-    ty_i18n_languages   TYPE string_table,
-    ty_bsp_range        TYPE RANGE OF o2applname,
-    ty_bsp_names        TYPE STANDARD TABLE OF o2applname WITH EMPTY KEY,
-    ty_comment_patterns TYPE RANGE OF string,
+    ty_i18n_languages    TYPE string_table,
+    ty_ignore_uuid_range TYPE RANGE OF sysuuid_x16,
+    ty_bsp_range         TYPE RANGE OF o2applname,
+    ty_bsp_names         TYPE STANDARD TABLE OF o2applname WITH EMPTY KEY,
+    ty_comment_patterns  TYPE RANGE OF string,
     "! <p class="shorttext synchronized" lang="en">Type of message in i18n check</p>
-    ty_message_type     TYPE c LENGTH 30,
+    ty_message_type      TYPE syst_msgv,
 
     BEGIN OF ty_i18n_text,
       key   TYPE string,
@@ -45,16 +46,16 @@ INTERFACE zif_i18nchk_ty_global
 
     "! <p class="shorttext synchronized" lang="en">Check result for specific i18n file</p>
     BEGIN OF ty_i18n_check_result,
-      file          TYPE ty_i18n_file,
-      ignored       TYPE abap_bool,
-      message       TYPE string,
-      message_type  TYPE ty_message_type,
-      sy_msg_type   TYPE sy-msgty,
-      key           TYPE string,
-      value         TYPE string,
-      default_value TYPE string,
+      file           TYPE ty_i18n_file,
+      ign_entry_uuid TYPE sysuuid_x16,
+      message        TYPE string,
+      message_type   TYPE ty_message_type,
+      sy_msg_type    TYPE sy-msgty,
+      key            TYPE string,
+      value          TYPE string,
+      default_value  TYPE string,
     END OF ty_i18n_check_result,
-    ty_i18n_check_results TYPE STANDARD TABLE OF ty_i18n_check_result WITH EMPTY KEY,
+    ty_i18n_check_results TYPE SORTED TABLE OF ty_i18n_check_result WITH NON-UNIQUE KEY file message_type,
 
     "! <p class="shorttext synchronized" lang="en">Check result for a single BSP (UI5 Repository)</p>
     BEGIN OF ty_check_result,
@@ -69,11 +70,17 @@ INTERFACE zif_i18nchk_ty_global
 
     ty_check_results TYPE STANDARD TABLE OF ty_check_result WITH KEY bsp_name.
 
+  TYPES BEGIN OF ty_i18n_ignored_entry.
+  INCLUDE TYPE zi18nchk_ignr.
+  TYPES ignored TYPE abap_bool.
+  TYPES END OF ty_i18n_ignored_entry.
+
   TYPES BEGIN OF ty_i18n_file_int.
   INCLUDE TYPE zif_i18nchk_ty_global=>ty_i18n_file.
   TYPES rep_map TYPE /ui5/ui5_rep_path_map_s.
   TYPES END OF ty_i18n_file_int.
 
   TYPES:
-    ty_i18n_files_int TYPE STANDARD TABLE OF ty_i18n_file_int WITH EMPTY KEY.
+    ty_i18n_files_int       TYPE STANDARD TABLE OF ty_i18n_file_int WITH EMPTY KEY,
+    ty_i18n_ignored_entries TYPE SORTED TABLE OF ty_i18n_ignored_entry WITH NON-UNIQUE KEY file_path file_name message_type i18n_key.
 ENDINTERFACE.

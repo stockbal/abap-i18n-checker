@@ -17,6 +17,7 @@ TYPES:
 
   ty_repos TYPE STANDARD TABLE OF ty_repo WITH EMPTY KEY.
 
+
 CLASS lcl_repo_reader DEFINITION.
 
   PUBLIC SECTION.
@@ -117,10 +118,10 @@ CLASS ltcl_abap_unit DEFINITION FINAL FOR TESTING
       test_data2 TYPE ty_repos,
       test_data3 TYPE ty_repos,
       test_data4 TYPE ty_repos,
-      cut        TYPE REF TO zcl_i18nchk_checker.
+      cut        TYPE REF TO zcl_i18nchk_checker,
+      ignored_entries_double type ref to zif_i18nchk_ign_entry_reader.
 
-    METHODS:
-      setup,
+    METHODS: setup,
       test_missing_file FOR TESTING,
       test_missing_default_file FOR TESTING,
       test_missing_key FOR TESTING,
@@ -182,6 +183,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
 
   METHOD setup.
+    ignored_entries_double ?= cl_abap_testdouble=>create( object_name = 'ZIF_I18NCHK_IGN_ENTRY_READER' ).
   ENDMETHOD.
 
 
@@ -196,6 +198,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
     cut->repo_access_factory = NEW lcl_repo_access_factory( test_data ).
     cut->repo_reader = NEW lcl_repo_reader( ).
+    cut->ignored_entries_reader = ignored_entries_double.
 
     cut->check_translations( ).
 
@@ -220,6 +223,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
     cut->repo_access_factory = NEW lcl_repo_access_factory( test_data2 ).
     cut->repo_reader = NEW lcl_repo_reader( ).
+    cut->ignored_entries_reader = ignored_entries_double.
 
     cut->check_translations( ).
 
@@ -243,6 +247,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
     cut->repo_access_factory = NEW lcl_repo_access_factory( test_data3 ).
     cut->repo_reader = NEW lcl_repo_reader( ).
+    cut->ignored_entries_reader = ignored_entries_double.
 
     cut->check_translations( ).
 
@@ -267,6 +272,7 @@ CLASS ltcl_abap_unit IMPLEMENTATION.
 
     cut->repo_access_factory = NEW lcl_repo_access_factory( test_data4 ).
     cut->repo_reader = NEW lcl_repo_reader( ).
+    cut->ignored_entries_reader = ignored_entries_double.
 
     cut->check_translations( ).
 
