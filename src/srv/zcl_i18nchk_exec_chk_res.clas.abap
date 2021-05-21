@@ -16,7 +16,7 @@ CLASS zcl_i18nchk_exec_chk_res DEFINITION
         default_language             TYPE string VALUE 'defLang',
         compare_against_default_file TYPE string VALUE 'compAgainstDef',
         target_language              TYPE string VALUE 'trgtLang',
-        show_ignored                 TYPE string VALUE 'showIgnored',
+        show_excluded                TYPE string VALUE 'showExcluded',
         bsp_name                     TYPE string VALUE 'bspName',
       END OF c_parameters.
 ENDCLASS.
@@ -32,8 +32,8 @@ CLASS zcl_i18nchk_exec_chk_res IMPLEMENTATION.
 
     DATA(default_language) = mo_request->get_uri_query_parameter( iv_name = c_parameters-default_language ).
 
-    DATA(show_ignored_entries) = COND #(
-      WHEN mo_request->get_uri_query_parameter( iv_name = c_parameters-show_ignored ) = 'true' THEN abap_true ).
+    DATA(show_excluded_entries) = COND #(
+      WHEN mo_request->get_uri_query_parameter( iv_name = c_parameters-show_excluded ) = 'true' THEN abap_true ).
 
     DATA(compare_against_default) = COND #(
       WHEN mo_request->get_uri_query_parameter(
@@ -53,11 +53,11 @@ CLASS zcl_i18nchk_exec_chk_res IMPLEMENTATION.
 
     " execute the checks
     DATA(i18n_checker) = NEW zcl_i18nchk_checker(
-      bsp_name_range           = bsp_name_range
-      return_ignored_entries   = show_ignored_entries
-      default_language         = default_language
-      compare_against_def_file = compare_against_default
-      target_languages         = target_languages ).
+      bsp_name_range            = bsp_name_range
+      consider_ignored_messages = show_excluded_entries
+      default_language          = default_language
+      compare_against_def_file  = compare_against_default
+      target_languages          = target_languages ).
 
     TRY.
         i18n_checker->check_translations( ).

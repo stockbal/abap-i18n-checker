@@ -13,7 +13,7 @@ CLASS zcl_i18nchk_checker DEFINITION
           bsp_name_range           TYPE zif_i18nchk_ty_global=>ty_bsp_range
           default_language         TYPE string DEFAULT 'en'
           compare_against_def_file TYPE abap_bool DEFAULT abap_true
-          return_ignored_entries   TYPE abap_bool OPTIONAL
+          consider_ignored_messages   TYPE abap_bool OPTIONAL
           target_languages         TYPE zif_i18nchk_ty_global=>ty_i18n_languages,
       "! <p class="shorttext synchronized" lang="en">Starts check for missing/incomplete translations</p>
       check_translations
@@ -94,7 +94,7 @@ CLASS zcl_i18nchk_checker DEFINITION
       bsp_name_range             TYPE zif_i18nchk_ty_global=>ty_bsp_range,
       default_language           TYPE string,
       compare_against_def_file   TYPE abap_bool,
-      return_ignored_entries     TYPE abap_bool,
+      consider_ignored_messages     TYPE abap_bool,
       target_languages           TYPE RANGE OF string,
       all_languages              TYPE RANGE OF string,
       bsp_infos                  TYPE zif_i18nchk_ty_global=>ty_bsp_infos,
@@ -153,7 +153,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
   METHOD constructor.
     me->repo_reader = NEW zcl_i18nchk_repo_reader( ).
     me->repo_access_factory = NEW zcl_i18nchk_rep_access_factory( ).
-    me->return_ignored_entries = return_ignored_entries.
+    me->consider_ignored_messages = consider_ignored_messages.
     me->ignored_entries_reader = NEW zcl_i18nchk_ign_entry_reader( ).
     me->default_language = default_language.
     me->compare_against_def_file = compare_against_def_file.
@@ -464,7 +464,7 @@ CLASS zcl_i18nchk_checker IMPLEMENTATION.
       message_type = check_result-message_type
       i18n_key     = check_result-key ).
     IF ignored_entry IS NOT INITIAL.
-      IF return_ignored_entries = abap_true.
+      IF consider_ignored_messages = abap_true.
         INSERT check_result INTO TABLE current_check_result-i18n_results ASSIGNING FIELD-SYMBOL(<added_check_result>).
         <added_check_result>-ign_entry_uuid = ignored_entry-ign_entry_uuid.
       ENDIF.
