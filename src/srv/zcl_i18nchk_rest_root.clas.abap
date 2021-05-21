@@ -30,8 +30,8 @@ CLASS zcl_i18nchk_rest_root IMPLEMENTATION.
       iv_handler_class = 'ZCL_I18NCHK_EXEC_CHK_RES' ).
 
     router->attach(
-      iv_template      = '/ignoreKeys'
-      iv_handler_class = 'ZCL_I18NCHK_IGNORE_I18NKEY_RES' ).
+      iv_template      = '/ignoredMessages'
+      iv_handler_class = 'ZCL_I18NCHK_IGNORE_I18NMSG_RES' ).
 
     router->attach(
       iv_template      = '/repoInfos'

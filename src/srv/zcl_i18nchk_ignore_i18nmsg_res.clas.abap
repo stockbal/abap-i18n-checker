@@ -1,5 +1,5 @@
 "! <p class="shorttext synchronized" lang="en">Resource for Ignore entries for i18n keys</p>
-CLASS zcl_i18nchk_ignore_i18nkey_res DEFINITION
+CLASS zcl_i18nchk_ignore_i18nmsg_res DEFINITION
   PUBLIC
   INHERITING FROM cl_rest_resource
   FINAL
@@ -37,7 +37,7 @@ ENDCLASS.
 
 
 
-CLASS zcl_i18nchk_ignore_i18nkey_res IMPLEMENTATION.
+CLASS zcl_i18nchk_ignore_i18nmsg_res IMPLEMENTATION.
 
 
   METHOD if_rest_resource~post.
