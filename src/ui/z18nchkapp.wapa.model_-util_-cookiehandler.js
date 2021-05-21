@@ -1,0 +1,2 @@
+"use strict";sap.ui.define([],function(){const n="flp.plugins.logoninfo.languages";const t="flp.plugins.logoninfo.clients";function i(n,t){document.cookie=`${n}=${t};path=/`}function o(n){const t=`${n}=`;var i=document.cookie.split(";");for(var o=0;o<i.l+
+ength;o++){var e=i[o];while(e.charAt(0)==" "){e=e.substring(1)}if(e.indexOf(t)==0){return e.substring(t.length,e.length)}}return""}var e={};return e});                                                                                                        
