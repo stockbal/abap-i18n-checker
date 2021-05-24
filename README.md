@@ -1,9 +1,17 @@
 # abap-i18n-checker
-Tool to check UI5 repositories in an ABAP system for missing/incomplete i18n translations
+Tool to check UI5 repositories in an ABAP system for missing/incomplete
+i18n translations
 
 ## Check procedure
-Normally each UI5 app has at least 2 `i18n` files at a given path. The default file that is called `i18n.properties` and the language file of your default language, let' say _english_ `i18n_en.properties`. If the app is translated into several other languages you will get an additional file for each language.  
-Via the tools in this repository you can compare the status of a certain language file to your base `i18n` file to see if a key is missing in the target language or if the value for a key is equal to the one in the base file - which in most cases means that it is not translated.
+Normally each UI5 app has at least 2 `i18n` files at a given path. 
+The default file that is called `i18n.properties` and the language file 
+of your default language, let's say _english_ `i18n_en.properties`. 
+If the app is translated into several other languages you will get an 
+additional file for each language.  
+Via the tools in this repository you can compare the status of a certain 
+language file to your base `i18n` file to see if a key is missing in the 
+target language or if the value for a key is equal to the one in
+the base file - which in most cases means that it is not translated.
 
 ## Package overview
 - **/src**  
