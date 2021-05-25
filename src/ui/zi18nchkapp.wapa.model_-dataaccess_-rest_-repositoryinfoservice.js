@@ -1,0 +1,2 @@
+"use strict";sap.ui.define(["devepos/i18ncheck/model/dataAccess/util/ajax"],function(e){function t(e){return e&&e.__esModule&&typeof e.default!=="undefined"?e.default:e}const n=t(e);const s=`/sap/bc/zi18nchksrv/repoInfos`;class a{async updateRepoInfo({bs+
+pName:e,gitUrl:t}){if(!e){return null}const a=await n.fetchCSRF();return n.send(s,{method:"POST",dataType:"",CSRFToken:a,data:JSON.stringify({bspName:e,gitUrl:t})})}}return a});                                                                              

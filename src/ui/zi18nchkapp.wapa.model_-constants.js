@@ -1,0 +1,1 @@
+"use strict";sap.ui.define([],function(){var A={SRV_ROOT:"/sap/bc/zi18nchksrv",navParams:{checkResultsPage:{DEFAULT_LANGUAGE:"defLang",COMPARE_AGAINST_DEFAULT_FILE:"compAgainstDef",TARGET_LANGUAGE:"trgtLang",BSP_NAME:"bspName"}}};return A});              
