@@ -23,7 +23,7 @@ the base file - which in most cases means that it is not translated.
 - **/src/srv**  
   Handler classes for REST endpoints which are needed for the UI
 - **/src/ui**  
-  UI5 app for retrieving and displaying the translation status of UI5 repositories. The source code of the app can be found at [i18n-checker](https://github.com/stockbal/i18n-checker). The app can be run in standalone mode (url: `<server-url>/sap/bc/ui5_ui5/sap/z18nchkapp/index.html`) or via integrating it into Fiori Launchpad
+  UI5 app for retrieving and displaying the translation status of UI5 repositories. The source code of the app can be found at [i18n-checker](https://github.com/stockbal/i18n-checker). The app can be run in standalone mode (url: `<server-url>/sap/bc/ui5_ui5/sap/zi18nchkapp/index.html`) or via integrating it into Fiori Launchpad
 
 ## System Requirements
 The minimum NW version is not yet determined, probable v750
