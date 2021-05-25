@@ -1,1 +1,0 @@
-"use strict";sap.ui.define(["sap/ui/core/IconPool"],function(o){o.addIcon("git","fontawesome",{fontFamily:"Font Awesome 5 Brands",content:"eF1D3"})});                                                                                                         

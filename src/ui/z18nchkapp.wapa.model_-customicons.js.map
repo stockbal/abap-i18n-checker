@@ -1,2 +1,0 @@
-{"version":3,"sources":["../../dev/model/customIcons.js"],"names":["IconPool","addIcon","fontFamily","content"],"mappings":";;;AAEAA,EAAAA,QAAQ,CAACC,OAAT,CAAiB,KAAjB,EAAwB,aAAxB,EAAuC;AAAEC,IAAAA,UAAU,EAAE,uBAAd;AAAuCC,IAAAA,OAAO,EAAE;AAAhD,GAAvC","sour+
-cesContent":["import IconPool from \"sap/ui/core/IconPool\";\n\nIconPool.addIcon(\"git\", \"fontawesome\", { fontFamily: \"Font Awesome 5 Brands\", content: \"eF1D3\" });\n"],"file":"customIcons.js"}                                                        

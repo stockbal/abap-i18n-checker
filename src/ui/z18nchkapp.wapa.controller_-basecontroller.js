@@ -1,2 +1,0 @@
-"use strict";sap.ui.define(["sap/ui/core/mvc/Controller"],function(e){const t=e.extend("devepos.i18ncheck.controller.BaseController",{onInit:function e(){},getRouter:function e(){return this.getOwnerComponent().getRouter()},getFlexColHelper:function e(){+
-return this.getOwnerComponent().getHelper()}});return t});                                                                                                                                                                                                     
