@@ -26,13 +26,14 @@ CLASS zcl_i18nchk_i18n_util IMPLEMENTATION.
 
     " each line consists of the pattern <key> = <value>
     LOOP AT file_content ASSIGNING FIELD-SYMBOL(<content>).
-      SPLIT <content> AT '=' INTO TABLE DATA(tokens).
+      DATA(sep_offset) = find( val = <content> sub = '=' ).
+      CHECK sep_offset > 0.
 
-      CHECK lines( tokens ) = 2.
+      DATA(value_offset) = sep_offset + 1.
 
       result = VALUE #( BASE result
-        ( key   = condense( tokens[ 1 ] )
-          value = condense( tokens[ 2 ] ) ) ).
+        ( key   = condense( <content>(sep_offset) )
+          value = condense( <content>+value_offset ) ) ).
     ENDLOOP.
 
     IF sort_keys = abap_true.
